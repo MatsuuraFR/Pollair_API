@@ -11,9 +11,11 @@ public interface FilesStorageService {
 
 	  public void save(MultipartFile file, String idLogin);
 
-	  public Resource load(String filename);
+	  public Resource load(String filename, String idLogin);
 
-	  public void deleteAll();
+	  //public void deleteAll();
+	  
+	  public int delete(String filename, String idLogin);
 
-	  public Stream<Path> loadAll();
+	  public Stream<Path> loadAll(String idLogin);
 }
