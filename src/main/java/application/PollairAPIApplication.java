@@ -10,8 +10,9 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.boot.CommandLineRunner;
 import javax.annotation.Resource;
 
-@SpringBootApplication(scanBasePackages="controller")
-@ComponentScan("service")
+//@SpringBootApplication(scanBasePackages="controller")
+@SpringBootApplication(scanBasePackages={"controller","service"})
+//@ComponentScan("service")
 public class PollairAPIApplication implements CommandLineRunner {
 	
 	@Resource
