@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Custom ###
+data/personne/*
+!data/personne/.exist

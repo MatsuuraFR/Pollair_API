@@ -72,7 +72,7 @@ public class UploadFileHandler {
 					return JsonResponse.generateResponse("ID inconnu", 0, null);
 				}
 			}else {
-				return JsonResponse.generateResponse("Extension de fichiers invalide: ", 0, null);
+				return JsonResponse.generateResponse("Extension de fichiers invalide: ", 1, null);
 			}
 		}else {
 			return JsonResponse.generateResponse("Erreur extension fichier: ", -1, null);
