@@ -15,8 +15,10 @@ import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public class FilesStorageServiceImpl implements FilesStorageService {
+public class FSSTimelineFolderImpl implements FilesStorageService {
 	private final Path root = Paths.get("data/personne");
+	
+	private final String TimelineFolderName = "timeline";
 
 	@Override
 	public void init() {
@@ -31,7 +33,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
 	@Override
 	public void save(MultipartFile file, String idLogin) {
 		try {
-			Path folderSession = root.resolve(idLogin);
+			Path folderSession = root.resolve(idLogin + "/" + TimelineFolderName);
 			if(Files.exists(folderSession)) {
 				//System.out.println("fichier existe");//debug
 				
@@ -49,7 +51,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
 	@Override
 	public Resource load(String filename, String idLogin) {
 		try {
-			Path folderSession = root.resolve(idLogin);
+			Path folderSession = root.resolve(idLogin + "/" + TimelineFolderName);
 			
 			Path file = folderSession.resolve(filename);
 			//System.out.println(file.getFileName());//debug
@@ -74,7 +76,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
 	
 	@Override
 	public int delete(String filename, String idLogin){
-		Path folderSession = root.resolve(idLogin);
+		Path folderSession = root.resolve(idLogin + "/" + TimelineFolderName);
 		Path file = folderSession.resolve(filename);
 		
 		try {
@@ -92,7 +94,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
 	@Override
 	public Stream<Path> loadAll(String idLogin) {
 		try {
-			Path folderSession = root.resolve(idLogin);
+			Path folderSession = root.resolve(idLogin + "/" + TimelineFolderName);
 			return Files.walk(folderSession, 1).filter(path -> !path.equals(this.root)).map(this.root::relativize);
 		} catch (IOException e) {
 			throw new RuntimeException("Could not load the files!");
