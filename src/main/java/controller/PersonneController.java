@@ -40,6 +40,7 @@ import model.PersonneRepository;
 import model.PersonneRowMapper;
 import service.FilesStorageService;
 
+@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
 @RestController
 @RequestMapping(path = "/personne")
 public class PersonneController {
@@ -71,7 +72,6 @@ public class PersonneController {
 		
 	}
 	
-	@CrossOrigin(origins="http://localhost:3000")
 	@GetMapping("/createpersonne")
 	public ResponseEntity<Object> createPersonne(){
 		
