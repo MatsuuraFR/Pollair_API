@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import Tools.FileInfo;
 import Tools.JsonResponse;
@@ -45,6 +46,7 @@ import service.FilesStorageServiceImpl;
 //import com.bezkoder.spring.files.upload.model.ResponseMessage;
 //import com.bezkoder.spring.files.upload.service.FilesStorageService;
 
+@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
 @RestController
 @RequestMapping(path = "/fileshandler")
 //@CrossOrigin("http://localhost:8080")
