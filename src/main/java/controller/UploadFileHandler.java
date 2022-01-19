@@ -62,6 +62,8 @@ public class UploadFileHandler {
 					try {
 						storageService.save(file,idLogin);
 						
+						// 4 - lancement du traitement (gérer en async)
+						
 						return JsonResponse.generateResponse("Extension de fichiers valide", 200, null);
 					}catch(Exception e){
 						return JsonResponse.generateResponse("Erreur lors de l'ajout du fichier", -1, null);
@@ -77,6 +79,25 @@ public class UploadFileHandler {
 		}else {
 			return JsonResponse.generateResponse("Erreur extension fichier: ", -1, null);
 		}
+	}
+	
+	/*
+	 * TODO appel en async
+	 */
+	private void  processFileToJson(String file, String idLogin) {
+		/*
+		 * 1 - création d'une task
+		 * 2 - chargement du trajets.json de la personne
+		 * 3 - ajout des elements dans le json si ils n'existent pas
+		 * 4 - 
+		 * x - task en complet
+		 */
+		
+		//1 - création d'une task
+		//TODO
+		
+		//2 - chargement du trajets.json de la personne
+		
 	}
 	
 	@GetMapping("/files/{idLogin}")
@@ -145,6 +166,8 @@ public class UploadFileHandler {
 			return JsonResponse.generateResponse("Erreur ", -1, null);
 		}
 	}
+	
+	
 	
 	
 	/*
