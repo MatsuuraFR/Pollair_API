@@ -120,6 +120,7 @@ public class PersonneController {
 	
 	/*
 	 * iOS
+	 * http://localhost:8080/personne/testreadjson/ios/pMlmNQWo/yohann-2022-01-12.2022-01-12.timeline
 	 */
 	@GetMapping("/testreadjson/{typeOS}/{idLogin}/{filename}")
 	@ResponseBody
