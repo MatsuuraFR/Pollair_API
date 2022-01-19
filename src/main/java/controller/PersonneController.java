@@ -134,7 +134,7 @@ public class PersonneController {
 		HashMap<String,JSONObject> placesClean = new HashMap<String,JSONObject>();
 		
 		
-		Resource jsonFile = storageService.load(filename,idLogin);
+		Resource jsonFile = storageService.load(filename,idLogin, "timeline");
 		try (Reader reader = new InputStreamReader(jsonFile.getInputStream())) {
              String jsonString = FileCopyUtils.copyToString(reader);
              

@@ -1,8 +1,17 @@
 package controller;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -11,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,9 +35,11 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import Tools.FileInfo;
 import Tools.JsonResponse;
 import Tools.SQLRequests;
+import Tools.TrajetsFileTemplate;
 import model.Personne;
 import model.PersonneRowMapper;
 import service.FilesStorageService;
+import service.FilesStorageServiceImpl;
 
 //import com.bezkoder.spring.files.upload.model.FileInfo;
 //import com.bezkoder.spring.files.upload.model.ResponseMessage;
@@ -60,7 +72,7 @@ public class UploadFileHandler {
 					
 					//3 - ajout du fichier
 					try {
-						storageService.save(file,idLogin);
+						storageService.save(file,idLogin,FilesStorageServiceImpl.TimelineFolderName);
 						
 						// 4 - lancement du traitement (gérer en async)
 						
@@ -84,7 +96,7 @@ public class UploadFileHandler {
 	/*
 	 * TODO appel en async
 	 */
-	private void  processFileToJson(String file, String idLogin) {
+	private void processFileToJson(String file, String idLogin) {
 		/*
 		 * 1 - création d'une task
 		 * 2 - chargement du trajets.json de la personne
@@ -93,11 +105,91 @@ public class UploadFileHandler {
 		 * x - task en complet
 		 */
 		
+		//oject qui permettra la sauvegarde du fichier trajets.json
+		JSONObject trajetsJson = null;
+		
+		//Resource jsonFile = storageService.load(filename,idLogin);
+		
 		//1 - création d'une task
 		//TODO
 		
 		//2 - chargement du trajets.json de la personne
+		try {
+			Resource jsonFile = storageService.loadTrajetJson(idLogin);
+			
+			try (Reader reader = new InputStreamReader(jsonFile.getInputStream())){
+				String jsonString = FileCopyUtils.copyToString(reader);
+				
+				trajetsJson = new JSONObject(jsonString);
+				
+				//System.out.println(existingtrajetsJson.toString(1));
+				
+			}catch (IOException e) {
+				System.err.println("IOException1: "+e);
+			}
+		}catch(Exception e) {
+			//Le fichier n'existe pas
+			//TODO charger le template json
+		}
 		
+		//3 - 
+		//TrajetsFileTemplate trajetsFileTemplate = new TrajetsFileTemplate();
+		//chargement du template si aucun fichier dans la session n'existe
+		if(trajetsJson == null) {
+			//trajetsFileTemplate.setCleaned_place(existingtrajetsJson.getJSONArray("cleaned_place"));
+			try {
+				Resource jsonFileTemplate = storageService.load("trajets_file_template.json", idLogin, "template");
+				try (Reader reader = new InputStreamReader(jsonFileTemplate.getInputStream())){
+					String jsonString = FileCopyUtils.copyToString(reader);
+					
+					trajetsJson = new JSONObject(jsonString);
+					
+				}catch (IOException e) {
+					//le fichier n'existe pas
+					System.out.println("file not found: "+e.getMessage());
+				}
+				
+			}catch(Exception e) {
+				System.err.println(e);
+			}
+		}
+		
+		//4 - 
+		//TODO ajout (avec vérif si existe déjà) des trajets
+		
+		//5 - sauvegarde du fichier
+		Path filePath = FilesStorageServiceImpl.rootPersonne;
+		filePath = filePath.resolve(idLogin + "/" + FilesStorageServiceImpl.TrajetFolderName);
+		try {
+			//si le dossier trajet n'existe pas, on le crée
+			if(!Files.exists(filePath)) {
+				Files.createDirectories(filePath);
+			}
+			if(trajetsJson != null) {
+				try(BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toString()+"/trajets.json"))){
+					writer.write(trajetsJson.toString(1));
+					
+					//Files.copy(file.getInputStream(), folderSession.resolve(file.getOriginalFilename()),  StandardCopyOption.REPLACE_EXISTING);
+				}catch (IOException e) {
+					System.err.println("IOException2: " + e);
+				}
+			}
+		
+		}catch (IOException e) {
+			System.err.println(e);
+		}
+		
+		
+		//System.out.println(trajetsFileTemplate.toString(1));
+	}
+	
+	@GetMapping("/testprocesstimeline/{typeOS}/{idLogin}/{filename}")
+	@ResponseBody
+	public ResponseEntity<Object> readJson(@PathVariable String filename,@PathVariable("idLogin") String idLogin, @PathVariable("typeOS") String typeOS) {
+		
+		processFileToJson(filename,idLogin);
+		
+		return null; //debug
 	}
 	
 	@GetMapping("/files/{idLogin}")
@@ -141,7 +233,7 @@ public class UploadFileHandler {
 	@GetMapping("/files/{idLogin}/{filename:.+}")
 	@ResponseBody
 	public ResponseEntity<Resource> getFile(@PathVariable String filename,@PathVariable("idLogin") String idLogin) {
-		Resource file = storageService.load(filename,idLogin);
+		Resource file = storageService.load(filename,idLogin,"timeline");
 		//System.out.println("file.getFilename():"+file.getFilename());//debug
 		return ResponseEntity.ok()
 				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")

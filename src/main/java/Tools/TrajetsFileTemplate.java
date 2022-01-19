@@ -3,7 +3,7 @@ package Tools;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class TrajetsJson {
+public class TrajetsFileTemplate {
 	private JSONArray cleaned_place ;
 	
 	private JSONArray trajets;

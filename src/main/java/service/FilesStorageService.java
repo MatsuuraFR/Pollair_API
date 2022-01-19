@@ -9,10 +9,14 @@ import org.springframework.web.multipart.MultipartFile;
 public interface FilesStorageService {
 	  public void init();
 
-	  public void save(MultipartFile file, String idLogin);
+	  public void save(MultipartFile file, String idLogin, String type);
 
-	  public Resource load(String filename, String idLogin);
-
+	  public Resource load(String filename, String idLogin, String type);
+	  
+	  public Resource loadTrajetJson(String idLogin);
+	  
+	  //public void saveTrajetsJson(String data,String idLogin);
+	  
 	  //public void deleteAll();
 	  
 	  public int delete(String filename, String idLogin);
