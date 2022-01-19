@@ -32,6 +32,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
+
 
 import model.Personne;
 import model.PersonneRepository;
@@ -69,6 +71,7 @@ public class PersonneController {
 		
 	}
 	
+	@CrossOrigin(origins="http://localhost:3000")
 	@GetMapping("/createpersonne")
 	public ResponseEntity<Object> createPersonne(){
 		
