@@ -23,6 +23,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -80,7 +81,13 @@ public class UploadFileHandler {
 					try {
 						storageService.save(file,idLogin,FilesStorageServiceImpl.TimelineFolderName);
 						
+						//initialisation de l'état dans la bdd
+						
+						int codeRetourInit = jdbcTemplate.update(SQLRequests.InsertTaskInitialize, file.getOriginalFilename(), personne.getIdPersonne());
+						
 						// 4 - lancement du traitement (gérer en async)
+						//TODO récup de l'os soit dans la route (=> demande à l'user), soit dans le fichier (+ logique si l'info est dedans)
+						processFileToJson(file.getOriginalFilename(),personne.getIdPersonne() , idLogin, "ios");
 						
 						return JsonResponse.generateResponse("Extension de fichiers valide", 200, null);
 					}catch(Exception e){
@@ -102,10 +109,12 @@ public class UploadFileHandler {
 	/*
 	 * TODO appel en async
 	 */
-	private int processFileToJson(String filename, String idLogin, String typeOS) {
+	@Async
+	private int processFileToJson(String filename, int IdPersonne , String idLogin, String typeOS) {
 		
 		//objet qui permettra la sauvegarde du fichier trajets.json
 		JSONObject trajetsJson = null;
+		
 		
 		//Resource jsonFile = storageService.load(filename,idLogin);
 		
@@ -151,11 +160,13 @@ public class UploadFileHandler {
 				}catch (IOException e) {
 					//le fichier n'existe pas
 					System.out.println("file not found: "+e.getMessage());
+					jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("error"),filename,IdPersonne);
 					return -1;
 				}
 				
 			}catch(Exception e) {
 				System.err.println(e);
+				jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("error"),filename,IdPersonne);
 				return -1;
 			}
 		}
@@ -250,16 +261,19 @@ public class UploadFileHandler {
 									trajetObjectTemplate.put("cleaned_trip", tripsClean.get( sectionClean.get(key).getJSONObject("data").getJSONObject("trip_id").getString("$oid") ));
 									trajetObjectTemplate.put("locations", locationByIdSection.get(key) );
 								}else {
+									jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("error"),filename,IdPersonne);
 									return -1;
 								}
 								trajetsJson.getJSONArray("trajets").put(trajetObjectTemplate);
 							}catch (IOException e) {
 								//le fichier n'existe pas
 								System.out.println("file template object not found: "+e.getMessage());
+								jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("error"),filename,IdPersonne);
 								return -1;
 							}
 						}catch(Exception e) {
 							System.err.println(e);
+							jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("error"),filename,IdPersonne);
 							return -1;
 						}
 				    }
@@ -272,6 +286,7 @@ public class UploadFileHandler {
 			
 		}catch(Exception e) {
 			System.err.println(e);
+			jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("error"),filename,IdPersonne);
 			return -1;
 		}
 		
@@ -298,6 +313,7 @@ public class UploadFileHandler {
 			System.err.println(e);
 		}
 		
+		jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("ok"),filename,IdPersonne);
 		return 1;
 		//System.out.println(trajetsFileTemplate.toString(1));
 	}
@@ -306,7 +322,7 @@ public class UploadFileHandler {
 	@ResponseBody
 	public ResponseEntity<Object> readJson(@PathVariable String filename,@PathVariable("idLogin") String idLogin, @PathVariable("typeOS") String typeOS) {
 		
-		processFileToJson(filename,idLogin, "ios");
+		processFileToJson(filename, 1 ,idLogin, "ios");
 		
 		return null; //debug
 	}
