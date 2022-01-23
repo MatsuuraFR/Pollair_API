@@ -318,6 +318,7 @@ public class UploadFileHandler {
 		//System.out.println(trajetsFileTemplate.toString(1));
 	}
 	
+	/*
 	@GetMapping("/testprocesstimeline/{typeOS}/{idLogin}/{filename}")
 	@ResponseBody
 	public ResponseEntity<Object> readJson(@PathVariable String filename,@PathVariable("idLogin") String idLogin, @PathVariable("typeOS") String typeOS) {
@@ -326,6 +327,7 @@ public class UploadFileHandler {
 		
 		return null; //debug
 	}
+	*/
 	
 	@GetMapping("/files/{idLogin}")
 	public /*ResponseEntity<List<FileInfo>>*/ ResponseEntity<Object> getListFiles(@PathVariable("idLogin") String idLogin) {

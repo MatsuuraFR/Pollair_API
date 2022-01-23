@@ -140,6 +140,7 @@ public class PersonneController {
 	 * iOS
 	 * http://localhost:8080/personne/testreadjson/ios/pMlmNQWo/yohann-2022-01-12.2022-01-12.timeline
 	 */
+	/*
 	@GetMapping("/testreadjson/{typeOS}/{idLogin}/{filename}")
 	@ResponseBody
 	public ResponseEntity<Object> readJson(@PathVariable String filename,@PathVariable("idLogin") String idLogin, @PathVariable("typeOS") String typeOS){
@@ -196,11 +197,7 @@ public class PersonneController {
 					break;
 				}
 				
-				/*
-				if(getJsonMetadataKey(jsonObject.getJSONObject(i)).equals("segmentation/raw_trip")) {
-					trajets.add(jsonObject.getJSONObject(i));
-				}
-				*/
+				
 			}
 			
 			//DEBUG
@@ -232,6 +229,7 @@ public class PersonneController {
 		
 		//return JsonResponse.generateResponse("ok", 200, null);
 	}
+	*/
 	
 	private String getJsonMetadataKey(JSONObject jso) {
 		return jso.getJSONObject("metadata").getString("key");
