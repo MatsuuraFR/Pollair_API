@@ -37,6 +37,7 @@ CREATE TABLE Etat(
 
 CREATE TABLE Task(
 	IdTask SERIAL PRIMARY KEY,
+	FileName VARCHAR(255) NOT NULL,
 	FK_IdEtat int NOT NULL REFERENCES Etat(IdEtat),
 	DtLaunched TIMESTAMP NOT NULL,
 	DtModif TIMESTAMP NOT NULL,
@@ -83,3 +84,7 @@ INSERT INTO Indice (NomIndice,Unite) VALUES ('ozone','O3');
 INSERT INTO Indice (NomIndice,Unite) VALUES ('particules de diamètre inférieur à 10 micromètres','PM10');
 INSERT INTO Indice (NomIndice,Unite) VALUES ('particules de diamètre inférieur à 2,5 micromètres','PM2,5');
 
+-- Etat
+Insert INTO Etat (NomEtat) VALUES ('en cours');
+Insert INTO Etat (NomEtat) VALUES ('complet');
+Insert INTO Etat (NomEtat) VALUES ('erreur');

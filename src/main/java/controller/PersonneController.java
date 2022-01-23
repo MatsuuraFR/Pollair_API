@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -39,6 +40,7 @@ import model.Personne;
 import model.PersonneRepository;
 import model.PersonneRowMapper;
 import service.FilesStorageService;
+import service.FilesStorageServiceImpl;
 
 @CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
 @RestController
@@ -121,10 +123,24 @@ public class PersonneController {
 		//return null;//debug
 	}
 	
+	@GetMapping("trajets/{idLogin}")
+	@ResponseBody
+	public ResponseEntity<Resource> getTrajets(@PathVariable("idLogin") String idLogin){
+		
+		Resource file = storageService.load("trajets.json",idLogin,FilesStorageServiceImpl.TrajetFolderName);
+		//System.out.println("file.getFilename():"+file.getFilename());//debug
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
+				.body(file);
+		
+		//return null; //debug
+	}
+	
 	/*
 	 * iOS
 	 * http://localhost:8080/personne/testreadjson/ios/pMlmNQWo/yohann-2022-01-12.2022-01-12.timeline
 	 */
+	/*
 	@GetMapping("/testreadjson/{typeOS}/{idLogin}/{filename}")
 	@ResponseBody
 	public ResponseEntity<Object> readJson(@PathVariable String filename,@PathVariable("idLogin") String idLogin, @PathVariable("typeOS") String typeOS){
@@ -181,11 +197,7 @@ public class PersonneController {
 					break;
 				}
 				
-				/*
-				if(getJsonMetadataKey(jsonObject.getJSONObject(i)).equals("segmentation/raw_trip")) {
-					trajets.add(jsonObject.getJSONObject(i));
-				}
-				*/
+				
 			}
 			
 			//DEBUG
@@ -217,6 +229,7 @@ public class PersonneController {
 		
 		//return JsonResponse.generateResponse("ok", 200, null);
 	}
+	*/
 	
 	private String getJsonMetadataKey(JSONObject jso) {
 		return jso.getJSONObject("metadata").getString("key");
