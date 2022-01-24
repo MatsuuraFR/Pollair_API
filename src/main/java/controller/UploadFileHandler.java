@@ -24,6 +24,8 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -94,7 +96,17 @@ public class UploadFileHandler {
 						
 						// 4 - lancement du traitement (gérer en async)
 						//TODO récup de l'os soit dans la route (=> demande à l'user), soit dans le fichier (+ logique si l'info est dedans)
-						processFileToJson(file.getOriginalFilename(),personne.getIdPersonne() , idLogin, "ios");
+						
+						TaskExecutor theExecutor = new SimpleAsyncTaskExecutor();
+						
+						theExecutor.execute(new Runnable() {
+				            @Override
+				            public void run () {
+				            	processFileToJson(file.getOriginalFilename(),personne.getIdPersonne() , idLogin, "ios");
+				            }
+				        });
+						
+						//processFileToJson(file.getOriginalFilename(),personne.getIdPersonne() , idLogin, "ios");
 						
 						return JsonResponse.generateResponse("Extension de fichiers valide", 200, null);
 					}catch(Exception e){
