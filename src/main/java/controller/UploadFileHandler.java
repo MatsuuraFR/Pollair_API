@@ -1,11 +1,15 @@
 package controller;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,17 +17,20 @@ import java.util.stream.Collectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+//import java.time.LocalDate;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -106,15 +113,19 @@ public class UploadFileHandler {
 		}
 	}
 	
+	
+	//@Async
+	//public void launchprocessFileToJsonAsync()
+	
 	/*
 	 * TODO appel en async
 	 */
-	@Async
 	private int processFileToJson(String filename, int IdPersonne , String idLogin, String typeOS) {
 		
 		//objet qui permettra la sauvegarde du fichier trajets.json
 		JSONObject trajetsJson = null;
 		
+		HashMap<String, JSONObject> indicesfeaturesJson = new HashMap<String, JSONObject>();
 		
 		//Resource jsonFile = storageService.load(filename,idLogin);
 		
@@ -132,22 +143,15 @@ public class UploadFileHandler {
 			
 			try (Reader reader = new InputStreamReader(jsonFile.getInputStream())){
 				String jsonString = FileCopyUtils.copyToString(reader);
-				
 				trajetsJson = new JSONObject(jsonString);
-				
-				//System.out.println(existingtrajetsJson.toString(1));
-				
 			}catch (IOException e) {
 				//System.err.println("IOException1: "+e);
-				
 			}
 		}catch(Exception e) {
 			//le fichier n'existe pas
 		}
 		
-		//3 - 
-		//TrajetsFileTemplate trajetsFileTemplate = new TrajetsFileTemplate();
-		//chargement du template si aucun fichier dans la session n'existe
+		//3 - chargement du template si aucun fichier dans la session n'existe
 		if(trajetsJson == null) {
 			//trajetsFileTemplate.setCleaned_place(existingtrajetsJson.getJSONArray("cleaned_place"));
 			try {
@@ -171,14 +175,11 @@ public class UploadFileHandler {
 			}
 		}
 		
-		//4 - 
-		//TODO ajout (avec vérif si existe déjà) des trajets
 		//4 - chargement du fichier timeline 
 		
 		//TODO raw_place cleaned_place ?
 		
 		JSONArray timelineFileJson = null;
-		
 		JSONArray tripRaw = new JSONArray();
 		
 		//JSONArray tripsClean = new JSONArray();
@@ -194,6 +195,7 @@ public class UploadFileHandler {
 			Resource timelineFile = storageService.load(filename,idLogin,"timeline");
 			try (Reader reader = new InputStreamReader(timelineFile.getInputStream())){
 				timelineFileJson = new JSONArray(FileCopyUtils.copyToString(reader));
+				
 				//récupération des blocs
 				for(int i=0; i < timelineFileJson.length();i++) {
 					
@@ -222,7 +224,6 @@ public class UploadFileHandler {
 								locationByIdSection.put(idSection, new JSONArray());
 							}
 							locationByIdSection.get(idSection).put(timelineFileJson.getJSONObject(i));
-							
 						}
 						break;
 						case "analysis/cleaned_section" : {
@@ -239,6 +240,66 @@ public class UploadFileHandler {
 				    System.out.println("locationByIdSection: "+key);//debug
 				    JSONArray value = entry.getValue();
 				    //System.out.println( jsonArrayTrajetExist(trajetsJson.getJSONArray("trajets"), key) );
+				    
+				    // 5 - ajout des indices
+				    //TODO key by date
+				    if(!indicesfeaturesJson.containsKey("1")) {
+				    	//chargement de la resource
+				    	JSONObject tempoIndices = null;
+				    	try {
+				    		JSONObject dateJson = sectionClean.get(key).getJSONObject("data").getJSONObject("start_local_dt");
+				    		String dateString = dateJson.getInt("year") + "-" + String.format("%02d", dateJson.getInt("month")) + "-" +String.format("%02d", dateJson.getInt("day"));
+				    		
+				    		
+				    		//InputStream indicesJsonFile = new URL(SQLRequests.GetIndicesByDate).openStream();
+				    		String wfsRequest = SQLRequests.GetIndicesByDate1 + dateString + SQLRequests.GetIndicesByDate2;
+				    		
+				    		InputStream indicesJsonFile = new URL(wfsRequest).openStream();
+				    		
+				    		try (Reader readerObject = new InputStreamReader(indicesJsonFile)){
+				    			String jsonString = FileCopyUtils.copyToString(readerObject);
+
+				    			tempoIndices = new JSONObject(jsonString);
+				    		}catch (IOException e) {
+				    			System.err.println("erreur lors de la récupération des indices, seront manquant pour se trajet");
+				    			System.err.println(e);
+				    		}
+				    		
+				    	}catch(Exception e) {
+				    		System.err.println("erreur lors de la récupération des indices, seront manquant pour se trajet");
+				    		System.err.println(e);
+				    	}
+				    	
+				    	//add to hashmap
+				    	if(tempoIndices != null) {
+					    	//TODO add by date
+				    		indicesfeaturesJson.put("1", tempoIndices);
+				    		tempoIndices = null;
+					    }
+				    }
+				    
+				    //ajout des indices au trajet
+				    if(indicesfeaturesJson.containsKey("1")) {
+				    	
+				    	//value
+				    	for(int i = 0; i < value.length();i++) {
+				    		JSONObject location = value.getJSONObject(i);
+				    		JSONArray coords = location.getJSONObject("data").getJSONObject("loc").getJSONArray("coordinates");
+				    		int indexFeature = getIndexMinimalDistance(coords.getDouble(0),coords.getDouble(1),indicesfeaturesJson.get("1").getJSONArray("features"));
+				    		
+				    		if(indexFeature >= 0) {
+				    			JSONObject IndicesJson = indicesfeaturesJson.get("1").getJSONArray("features").getJSONObject(indexFeature).getJSONObject("properties");
+				    			
+				    			location.getJSONObject("data").put("code_no2", IndicesJson.getInt("code_no2"));
+				    			location.getJSONObject("data").put("code_so2", IndicesJson.getInt("code_so2"));
+				    			location.getJSONObject("data").put("code_o3", IndicesJson.getInt("code_o3"));
+				    			location.getJSONObject("data").put("code_pm10", IndicesJson.getInt("code_pm10"));
+				    			location.getJSONObject("data").put("code_pm25", IndicesJson.getInt("code_pm25"));
+				    		}
+				    		
+				    	}
+				    }
+				    
 				    
 				    if(!jsonArrayTrajetExist(trajetsJson.getJSONArray("trajets"), key)) {
 				    	
@@ -316,6 +377,30 @@ public class UploadFileHandler {
 		jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("ok"),filename,IdPersonne);
 		return 1;
 		//System.out.println(trajetsFileTemplate.toString(1));
+	}
+	
+	private double getDistanceBetweenPoints(double x1,double y1, double x2, double y2) {
+		return Math.sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)));
+	}
+	
+	private int getIndexMinimalDistance(double x, double y, JSONArray features) {
+		
+		double minDistance = Float.MAX_VALUE;
+		int minIndex = -1;
+		
+		for(int i = 0;i < features.length(); i++) {
+			//JSONArray coordinates = features.getJSONObject(i).getJSONObject("geometry").getJSONArray("coordinates");
+			double xF = features.getJSONObject(i).getJSONObject("properties").getDouble("x_wgs84");
+			double yF = features.getJSONObject(i).getJSONObject("properties").getDouble("y_wgs84");
+			//double distance = getDistanceBetweenPoints(x, y, coordinates.getDouble(0), coordinates.getDouble(1));
+			double distance = getDistanceBetweenPoints(x, y, xF, yF);
+			if(distance < minDistance) {
+				minDistance = distance;
+				minIndex = i;
+			}
+		}
+		
+		return minIndex;
 	}
 	
 	/*
