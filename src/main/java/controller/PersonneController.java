@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 
 import Tools.JsonResponse;
 import Tools.RandomString;
+import Tools.SQLRequests;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,6 +40,8 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import model.Personne;
 import model.PersonneRepository;
 import model.PersonneRowMapper;
+import model.Task;
+import model.TaskRowMapper;
 import service.FilesStorageService;
 import service.FilesStorageServiceImpl;
 
@@ -134,6 +137,29 @@ public class PersonneController {
 				.body(file);
 		
 		//return null; //debug
+	}
+	
+	@GetMapping("etatfile/{idLogin}/{filename}")
+	@ResponseBody
+	public ResponseEntity<Object> getFileEtat(@PathVariable String filename,@PathVariable("idLogin") String idLogin){
+		boolean fileExist = false;
+		Task resultQuery = null;
+		
+		try {
+			
+			resultQuery = jdbcTemplate.queryForObject(SQLRequests.GetEtatFile, new TaskRowMapper(), idLogin,filename);
+			
+			//System.out.println(resultQuery.getFk_idetat());
+			
+			//retour
+			return JsonResponse.generateResponse("OK",  HttpStatus.OK, resultQuery.getFk_idetat());
+			
+		}catch(EmptyResultDataAccessException e) {
+			return JsonResponse.generateResponse("Le fichier ou le login n'existe pas",  0, null);
+		}catch(Exception e) {
+			System.err.println(e);
+			return JsonResponse.generateResponse("erreur interne",  HttpStatus.INTERNAL_SERVER_ERROR, null);
+		}
 	}
 	
 	/*
