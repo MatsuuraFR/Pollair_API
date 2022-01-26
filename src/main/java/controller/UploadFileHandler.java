@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -139,10 +141,12 @@ public class UploadFileHandler {
 		
 		HashMap<String, JSONObject> indicesfeaturesJson = new HashMap<String, JSONObject>();
 		
+		//map permettant de trier par date les trajets. Pas besoin d'utiliser une object date, le comparator de string suffit pour ordonner les données
+		TreeMap<String,JSONObject> trajetsSortedByDate = new TreeMap<String,JSONObject>() ;
+		
 		//Resource jsonFile = storageService.load(filename,idLogin);
 		
-		//1 - création d'une task
-		//TODO
+		
 		
 		//2 - chargement du trajets.json de la personne
 		/* 
@@ -156,6 +160,32 @@ public class UploadFileHandler {
 			try (Reader reader = new InputStreamReader(jsonFile.getInputStream())){
 				String jsonString = FileCopyUtils.copyToString(reader);
 				trajetsJson = new JSONObject(jsonString);
+				
+				//récupération des trajets dans la map de tri
+				JSONArray trajetsInKeyTempo = trajetsJson.getJSONArray("trajets");
+				for(int i = 0; i < trajetsInKeyTempo.length();i++) {
+					JSONObject tr =  trajetsInKeyTempo.getJSONObject(i);
+					String datetime = tr.getJSONObject("cleaned_section").getJSONObject("data").getString("start_fmt_time");
+					trajetsSortedByDate.put(datetime, tr);
+				}
+				
+				//debug
+				/*
+				for (Map.Entry<String, JSONObject> entry : trajetsSortedByDate.entrySet()) {
+				    String key = entry.getKey();
+				    System.out.println("clé: "+key);//debug
+				    JSONObject value = entry.getValue();
+				    //System.out.println("value: "+value);//debug
+				}
+				*/
+				    
+				//nettoyage des trajets dans le json chargé
+				trajetsJson.put("trajets", new JSONArray());
+				
+				//clear
+				//trajetsInKeyTempo = null;
+				//System.gc();
+				
 			}catch (IOException e) {
 				//System.err.println("IOException1: "+e);
 			}
@@ -374,7 +404,9 @@ public class UploadFileHandler {
 									jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("error"),filename,IdPersonne);
 									return -1;
 								}
-								trajetsJson.getJSONArray("trajets").put(trajetObjectTemplate);
+								//trajetsJson.getJSONArray("trajets").put(trajetObjectTemplate);
+								trajetsSortedByDate.put(sectionClean.get(key).getJSONObject("data").getString("start_fmt_time"), trajetObjectTemplate);
+								
 							}catch (IOException e) {
 								//le fichier n'existe pas
 								System.out.println("file template object not found: "+e.getMessage());
@@ -387,6 +419,15 @@ public class UploadFileHandler {
 							return -1;
 						}
 				    }
+				}
+				
+				//ajout des trajets dans le json
+				for (Map.Entry<String, JSONObject> entry : trajetsSortedByDate.entrySet()) {
+				    String key = entry.getKey();
+				    System.out.println("clé: "+key);//debug
+				    //JSONObject value = entry.getValue();
+				    //System.out.println("value: "+value);//debug
+				    trajetsJson.getJSONArray("trajets").put(entry.getValue());
 				}
 				
 			}catch (IOException e) {
