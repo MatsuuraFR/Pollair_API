@@ -263,18 +263,55 @@ public class UploadFileHandler {
 				    		String dateString = dateJson.getInt("year") + "-" + String.format("%02d", dateJson.getInt("month")) + "-" +String.format("%02d", dateJson.getInt("day"));
 				    		
 				    		
-				    		//InputStream indicesJsonFile = new URL(SQLRequests.GetIndicesByDate).openStream();
-				    		String wfsRequest = SQLRequests.GetIndicesByDate1 + dateString + SQLRequests.GetIndicesByDate2;
+				    		//tentative chargement en cache du fichier wfs
+				    		//JSONObject wfsJson = null;
+				    		try {
+					    		Resource jsonWfs = storageService.load(dateString+".json", idLogin, FilesStorageServiceImpl.WfsFolderName);
+								try (Reader readerWfs = new InputStreamReader(jsonWfs.getInputStream())){
+									String jsonString = FileCopyUtils.copyToString(readerWfs);
+									
+									tempoIndices = new JSONObject(jsonString);
+									
+								}catch (IOException e) {
+									//le fichier n'existe pas
+									//System.out.println("file not found: "+e.getMessage());
+									//jdbcTemplate.update(SQLRequests.UpdateEtatTask,SQLRequests.etats.get("error"),filename,IdPersonne);
+									//return -1;
+								}
+				    		}catch(Exception e) {
+				    			
+				    		}
 				    		
-				    		InputStream indicesJsonFile = new URL(wfsRequest).openStream();
-				    		
-				    		try (Reader readerObject = new InputStreamReader(indicesJsonFile)){
-				    			String jsonString = FileCopyUtils.copyToString(readerObject);
-
-				    			tempoIndices = new JSONObject(jsonString);
-				    		}catch (IOException e) {
-				    			System.err.println("erreur lors de la récupération des indices, seront manquant pour se trajet");
-				    			System.err.println(e);
+				    		if(tempoIndices == null) {
+			
+					    		//InputStream indicesJsonFile = new URL(SQLRequests.GetIndicesByDate).openStream();
+					    		String wfsRequest = SQLRequests.GetIndicesByDate1 + dateString + SQLRequests.GetIndicesByDate2;
+					    		
+					    		InputStream indicesJsonFile = new URL(wfsRequest).openStream();
+					    		
+					    		try (Reader readerObject = new InputStreamReader(indicesJsonFile)){
+					    			String jsonString = FileCopyUtils.copyToString(readerObject);
+					    			
+					    			//sauvegarde du fichier
+					    			
+					    			Path filePath = FilesStorageServiceImpl.rootWfs;
+					    			//filePath = filePath.resolve(FilesStorageServiceImpl.rootWfs);
+					    			System.out.println(filePath);
+				    				try(BufferedWriter writer = new BufferedWriter(new FileWriter(filePath.toString()+"/" + dateString +".json"))){
+			    						writer.write(jsonString);
+			    						
+			    						//Files.copy(file.getInputStream(), folderSession.resolve(file.getOriginalFilename()),  StandardCopyOption.REPLACE_EXISTING);
+			    					}catch (IOException e) {
+			    						System.err.println("IOException: " + e);
+			    					}
+					    			
+					    			//récupération des indices
+					    			tempoIndices = new JSONObject(jsonString);
+					    			
+					    		}catch (IOException e) {
+					    			System.err.println("erreur lors de la récupération des indices, seront manquant pour se trajet");
+					    			System.err.println(e);
+					    		}
 				    		}
 				    		
 				    	}catch(Exception e) {
@@ -364,7 +401,7 @@ public class UploadFileHandler {
 		}
 		
 		
-		//5 - sauvegarde du fichier
+		//6 - sauvegarde du fichier
 		Path filePath = FilesStorageServiceImpl.rootPersonne;
 		filePath = filePath.resolve(idLogin + "/" + FilesStorageServiceImpl.TrajetFolderName);
 		try {

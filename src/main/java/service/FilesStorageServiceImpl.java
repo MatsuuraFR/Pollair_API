@@ -18,11 +18,13 @@ import org.springframework.web.multipart.MultipartFile;
 public class FilesStorageServiceImpl implements FilesStorageService {
 	public static final Path rootPersonne = Paths.get("data/personne");
 	public static final Path rootTemplate = Paths.get("data/template");
+	public static final Path rootWfs = Paths.get("data/wfs");
 	
 	//TODO enum
 	public static final String TimelineFolderName = "timeline";
 	public static final String TrajetFolderName = "trajet";
 	public static final String TemplateFolderName = "template";
+	public static final String WfsFolderName = "wfs";
 
 
 	@Override
@@ -55,6 +57,13 @@ public class FilesStorageServiceImpl implements FilesStorageService {
 				}
 				*/
 				//break;
+				/*
+				case WfsFolderName : {
+					folderSession = rootWfs;
+				}
+				
+				break;
+				*/
 				default : {
 					throw new RuntimeException("Invalid type");
 				}
@@ -94,6 +103,10 @@ public class FilesStorageServiceImpl implements FilesStorageService {
 				case TemplateFolderName : {
 					//folderSession = rootPersonne.resolve(idLogin + "/" + TemplateFolderName);
 					folderSession = rootTemplate;
+				}
+				break;
+				case WfsFolderName : {
+					folderSession = rootWfs;
 				}
 				break;
 				default : {
