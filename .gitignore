@@ -35,3 +35,6 @@ build/
 ### Custom ###
 data/personne/*
 !data/personne/.exist
+
+data/wfs/*
+!data/wfs/.exist
