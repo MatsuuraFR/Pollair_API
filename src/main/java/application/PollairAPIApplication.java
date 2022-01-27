@@ -4,6 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+
 import service.FilesStorageService;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
@@ -13,6 +15,7 @@ import javax.annotation.Resource;
 //@SpringBootApplication(scanBasePackages="controller")
 @SpringBootApplication(scanBasePackages={"controller","service"})
 //@ComponentScan("service")
+@EnableScheduling
 public class PollairAPIApplication implements CommandLineRunner {
 	
 	@Resource
@@ -20,6 +23,7 @@ public class PollairAPIApplication implements CommandLineRunner {
 	
 	public static void main(String[] args) {
 		SpringApplication.run(PollairAPIApplication.class, args);
+		SpringApplication.run(SchedulingTasksApplication.class);
 	}
 	
 	
